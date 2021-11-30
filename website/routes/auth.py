@@ -1,9 +1,8 @@
 from flask import Blueprint, request, render_template, redirect, url_for
 from flask_login.utils import login_required
-from sqlalchemy.orm.query import Query
 from flask_login import login_user, logout_user, current_user
 
-from ..models import Admin, Roles, Staff, Student, User, UserRoles
+from ..models import Admin, Roles, Staff, Student, User
 from ..extensions import db
 
 
@@ -28,12 +27,10 @@ def register_form():
         data = Student(name=uname, mobile=mobile)
         db.session.add(data)
         db.session.commit()
-        data_id = Query([Student], session=db.session).all()[-1].id
-        role_db: Roles = (
-            Query([Roles], session=db.session).filter_by(role_name="student").first()
-        )
+        data_id = Student.query.all()[-1].id
+        role_db: Roles = Roles.query.filter_by(role_name="student").first_or_404()
         user = User(username=uname, pwd=pwd, data_id=data_id)
-        user.roles = [role_db,]
+        user.roles = [role_db]
         db.session.add(user)
         db.session.commit()
         # user_id = Query([User], session=db.session).all()[-1].id
@@ -45,12 +42,10 @@ def register_form():
         data = Staff(name=uname, mobile=mobile)
         db.session.add(data)
         db.session.commit()
-        data_id = Query([Staff], session=db.session).all()[-1].id
-        role_db: Roles = (
-            Query([Roles], session=db.session).filter_by(role_name="staff").first()
-        )
+        data_id = Staff.query.all()[-1].id
+        role_db: Roles = Roles.query.filter_by(role_name="staff").first_or_404()
         user = User(username=uname, pwd=pwd, data_id=data_id)
-        user.roles=[role_db,]
+        user.roles = [role_db]
         db.session.add(user)
         db.session.commit()
         # user_id = Query([User], session=db.session).all()[-1].id
@@ -64,15 +59,13 @@ def register_form():
     else:
         data = Admin(name=uname, mobile=mobile)
         db.session.add(data)
-        db.session.commit()
-        data_id = Query([Admin], session=db.session).all()[-1].id
-        role_db: Roles = (
-            Query([Roles], session=db.session).filter_by(role_name="admin").first()
-        )
+        # db.session.commit()
+        data_id = Admin.query.all()[-1].id
+        role_db: Roles = Roles.query.filter_by(role_name="admin").first_or_404()
         user = User(username=uname, pwd=pwd, data_id=data_id)
-        user.roles = [role_db,]
+        user.roles = [role_db]
         db.session.add(user)
-        db.session.commit()
+        # db.session.commit()
         # user_id = Query([User], session=db.session).all()[-1].id
         # rel = UserRoles(
         #     user_id=user_id,
@@ -100,9 +93,7 @@ def sign_in_form():
     uname = request.form.get("username")
     pwd = request.form.get("password")
 
-    user: User = (
-        Query([User], session=db.session).filter_by(username=uname, pwd=pwd).first()
-    )
+    user: User = User.query.filter_by(username=uname, pwd=pwd).first_or_404()
     if not user:
         return f"<h1>Invalid Credentials</h1>\n<p>{uname}</p><p>{pwd}</p>"
     login_user(user, remember=False)
